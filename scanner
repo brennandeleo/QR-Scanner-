@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0d0d14; color: #e8e8f4; padding: 16px; }
+    h2 { font-size: 1rem; text-align: center; margin-bottom: 12px; }
+    #qr-reader { width: 100%; max-width: 420px; margin: 0 auto; }
+    #status { text-align: center; margin-top: 12px; font-size: .85rem; color: #8080aa; }
+    button { display: block; margin: 12px auto 0; padding: 10px 20px; background: #4f8ef7; color: #fff; border: none; border-radius: 8px; font-size: .9rem; cursor: pointer; }
+  </style>
+  </head>
+  <body>
+  <h2>📷 Scan QR Code</h2>
+  <div id="qr-reader"></div>
+  <div id="status">Starting camera…</div>
+  <button onclick="window.close()">Cancel</button>
+
+  <script>
+    // Parent origin allowlist — restrict postMessage target for security
+    const ALLOWED_PARENT_ORIGINS = [
+      "https://script.google.com",
+      "https://n-eaclhmcx2sricn2n27qpwxy5uwwuoznionrarcq-0lu-script.googleusercontent.com"
+      // add other googleusercontent subdomains your apps use
+    ];
+
+    const scanner = new Html5Qrcode("qr-reader");
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        const code = decodedText.trim();
+        document.getElementById("status").textContent = "✅ Got: " + code;
+        // Send to opener
+        if (window.opener) {
+          // "*" = any origin. Tighten with ALLOWED_PARENT_ORIGINS in production.
+          window.opener.postMessage({ type: "QR_RESULT", code: code }, "*");
+        }
+        scanner.stop().then(() => window.close()).catch(() => window.close());
+      },
+      (err) => { /* per-frame misses */ }
+    ).catch(err => {
+      document.getElementById("status").textContent = "❌ Camera error: " + err;
+    });
+  </script>
+  </body>
+  </html>
